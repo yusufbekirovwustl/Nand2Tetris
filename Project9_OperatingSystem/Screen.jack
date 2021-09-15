@@ -1,0 +1,140 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Screen.jack
+
+/**
+ * A library of functions for displaying graphics on the screen.
+ * The Hack physical screen consists of 512 rows (indexed 0..511, top to bottom)
+ * of 256 pixels each (indexed 0..255, left to right). The top left pixel on 
+ * the screen is indexed (0,0).
+ */
+class Screen {
+    static boolean color;
+    /** Initializes the Screen. */
+    function void init() {
+		return;
+    }
+
+    /** Erases the entire screen. */
+    function void clearScreen() {
+		return;
+    }
+
+    /** Sets the current color, to be used for all subsequent drawXXX commands.
+     *  Black is represented by true, white by false. */
+    function void setColor(boolean b) {
+	let color = b;
+	return;
+    }
+
+    /** Draws the (x,y) pixel, using the current color. */
+    function void drawPixel(int x, int y) {
+	var int address;
+	var int value;
+	let address = 16384 + (32*y) + (x/16);
+	let value = Memory.peek(address);
+	if(color) {
+	    let value = value & (-1);
+	}
+	else {
+	    let value = value & (-2);
+	}
+	do Memory.poke(address, value);
+	return;
+    }
+
+    /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
+    function void drawLine(int x1, int y1, int x2, int y2) {
+	var int a;
+	var int b;
+	var int dx;
+	var int dy;
+	var int x;
+	var int y;
+	var int diff;
+
+	let a = 0; // Step wise counters, a counts x steps and b counts y steps
+	let b= 0;
+	let dx = x2-x1;//Steps needed to reach x,y destination from x1,y1
+	let dy = y2-y1;
+	
+	let diff =  (a*dy) - (b*dx); //Will be zero initially, used for slopes
+
+	if(dx = 0) { // if verical line, special case
+	    while((~(a>dx)) & (~(b>dy))) {
+		do Screen.drawPixel(x1+a,y1+b);
+		if(dy>0) {
+		    let b = b+1;		
+		}
+		else {
+		    let b = b-1;
+		}
+	    }
+	}
+	if(dy = 0) { // if horizontal line, special case
+	    while((~(a>dx)) & (~(b>dy))) {
+		do Screen.drawPixel(x1+a,y1+b);
+		if(dx>0) {
+		    let a = a+1;		
+		}
+		else {
+		    let a = a-1;
+		}
+	    }
+	}
+	if((~(dy =0)) & (~(dx = 0))) { // General line
+	    while((~(a=dx)) & (~(b=dy))) {
+
+	   	 do Screen.drawPixel(x1 + a, y1 + b);
+		
+	        if(diff<0) {
+		    if(dy>0) {
+		        if(dx>0) {
+			    let a = a + 1; 
+			    let diff = diff + dy;
+		        }
+		        else {
+		    	    let a = a - 1;
+			    let diff = diff - dy;
+		        }		
+		    }
+		    else{
+		        let b = b - 1;
+		        let diff = diff + dx;
+		    }
+	        }
+	        else {
+		    if(dy>0) {
+		        let b = b + 1; 
+			let diff = diff -dx;		
+		    }
+		    else{
+		        if(dx>0) {
+			    let a = a + 1; 
+			    let diff = diff + dy;
+		        }
+		        else {
+		    	    let a = a - 1;
+			    let diff = diff - dy;
+		        }
+		    }
+	        }
+            }
+        }//If closing
+
+	return;	
+    }
+ 
+
+    /** Draws a filled rectangle whose top left corner is (x1, y1)
+     * and bottom right corner is (x2,y2), using the current color. */
+    function void drawRectangle(int x1, int y1, int x2, int y2) {
+	return;
+    }
+
+    /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
+    function void drawCircle(int x, int y, int r) {
+	return;
+    }
+}

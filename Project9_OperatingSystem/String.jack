@@ -1,0 +1,175 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/String.jack
+
+/**
+ * Represents character strings. In addition for constructing and disposing
+ * strings, the class features methods for getting and setting individual
+ * characters of the string, for erasing the string's last character,
+ * for appending a character to the string's end, and more typical
+ * string-oriented operations.
+ */
+class String {
+	field Array str;
+	field int length;
+	field int maxLengthC;
+
+    /** constructs a new empty string with a maximum length of maxLength
+     *  and initial length of 0. */
+    constructor String new(int maxLength) {
+	if(maxLength < 0) {
+	    do Sys.error(14); //Maximum length must be non-negative
+	}
+	if(maxLength = 0) {
+	    let str = Array.new(1);
+	    let maxLengthC = 0; 
+	}
+	else {
+	    let str = Array.new(maxLength);
+	    let maxLengthC = (maxLength - 1); //set as index of last entry in Array
+	}
+	let length = 0;
+	return this;
+    }
+
+    /** Disposes this string. */
+    method void dispose() {
+	do Memory.deAlloc(this);
+	return;
+    }
+
+    /** Returns the current length of this string. */
+    method int length() {
+	return length;
+    }
+
+    /** Returns the character at the j-th location of this string. */
+    method char charAt(int j) {
+	if(j>length) {
+	     do Sys.error(15); //String index out of bounds
+	}
+	return str[j];
+    }
+
+    /** Sets the character at the j-th location of this string to c. */
+    method void setCharAt(int j, char c) {
+	if(j>length) {
+	     do Sys.error(16); //String index out of bounds
+	}
+	let str[j] = c;
+	return;
+    }
+
+    /** Appends c to this string's end and returns this string. */
+    method String appendChar(char c) {
+	if(length > maxLengthC) {
+	    do Sys.error(17); //String is full
+	}
+	do setCharAt(length, c);
+	let length = length +1;
+	return this;
+    }
+
+    /** Erases the last character from this string. */
+    method void eraseLastChar() {
+	if(length = 0) {
+	    do Sys.error(18); //String is empty
+	}
+        let length = length - 1;
+	return;
+    }
+
+    /** Returns the integer value of this string, 
+     *  until a non-digit character is detected. */
+    method int intValue() {
+	var int value;
+	var int counter;
+	var boolean digit;
+	var boolean neg;
+
+	let value = 0;
+	let counter = 0;
+
+	if(((str[0] < 47) | (str[0] > 58)) & ~(str[0] = 45)) {
+	    let digit = false;
+	}
+	else{
+	    let digit = true;
+	}
+	if(str[0] = 45) {
+	    let neg = true;
+	}
+	while((counter < (maxLengthC + 1)) & digit) {
+	    if(((str[counter] < 47) | (str[counter] > 58)) & ~(str[0] = 45)) { 
+		if(neg) {
+	    	    let value = -value;
+		}
+	        return value; //Non-Digit detected
+	    }
+	    if(str[counter] = 45) {
+		//Dont add to value
+	    }
+	    else {
+		let value = value * 10 + ((str[counter] - 48));
+	    }
+	    let counter = counter + 1; 	    
+	}
+	if(neg) {
+	    let value = -value;
+	}
+        return value;
+    }
+
+    /** Sets this string to hold a representation of the given value. */
+    method void setInt(int val) {
+	var int lastDigit;
+	var int c;
+	var boolean neg;
+	
+	while(length > 0) { //Empty the string
+	   do eraseLastChar();
+	}
+
+	if (val < 0) { 
+	   let neg = true;
+	   let val = Math.abs(val);
+	}
+	else{ 
+	   let neg = false;
+	}
+
+
+	let lastDigit = val - ((val/10) * 10); //modulus
+	let c = lastDigit + 48; //Unicode val of c
+	if (val < 10) {
+	    if(neg){
+	        do appendChar(45);
+	    }
+	    do appendChar(c);
+	}
+	else {
+	    if(neg){ //Preserve neg property
+	        let val = -val;
+	    }
+	    do setInt(val/10);
+	    do appendChar(c);
+	}	
+	return;
+    }
+
+    /** Returns the new line character. */
+    function char newLine() {
+        return 128;
+    }
+
+    /** Returns the backspace character. */
+    function char backSpace() {
+        return 129;
+    }
+
+    /** Returns the double quote (") character. */
+    function char doubleQuote() {
+        return 34;
+    }
+}
