@@ -1,0 +1,82 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/05/CPU.hdl
+
+/**
+ * The Hack CPU (Central Processing unit), consisting of an ALU,
+ * two registers named A and D, and a program counter named PC.
+ * The CPU is designed to fetch and execute instructions written in 
+ * the Hack machine language. In particular, functions as follows:
+ * Executes the inputted instruction according to the Hack machine 
+ * language specification. The D and A in the language specification
+ * refer to CPU-resident registers, while M refers to the external
+ * memory location addressed by A, i.e. to Memory[A]. The inM input 
+ * holds the value of this location. If the current instruction needs 
+ * to write a value to M, the value is placed in outM, the address 
+ * of the target location is placed in the addressM output, and the 
+ * writeM control bit is asserted. (When writeM==0, any value may 
+ * appear in outM). The outM and writeM outputs are combinational: 
+ * they are affected instantaneously by the execution of the current 
+ * instruction. The addressM and pc outputs are clocked: although they 
+ * are affected by the execution of the current instruction, they commit 
+ * to their new values only in the next time step. If reset==1 then the 
+ * CPU jumps to address 0 (i.e. pc is set to 0 in next time step) rather 
+ * than to the address resulting from executing the current instruction. 
+ */
+
+CHIP CPU {
+
+    IN  inM[16],         // M value input  (M = contents of RAM[A])
+        instruction[16], // Instruction for execution
+        reset;           // Signals whether to re-start the current
+                         // program (reset==1) or continue executing
+                         // the current program (reset==0).
+
+    OUT outM[16],        // M value output
+        writeM,          // Write to M? 
+        addressM[15],    // Address in data memory (of M)
+        pc[15];          // address of next instruction
+
+    PARTS:
+    // Put your code here:
+    //Implementation of the A instruction requires setting A register to the respective values in the A type instruction(without the sign bit)
+    Not(in= instruction[15],out= notInstructionSign); /* Not gate */
+    Mux16(a= aluOutput,b[0..14]= instruction[0..14], b[15] = false,sel= notInstructionSign,out= outAluInstructionMux); /* Selects between two 16-bit inputs, to use to choose instruction or alu output */
+    Or(a= notInstructionSign,b= instruction[5],out= aRegisterLoad); /* Or gate */
+    ARegister(in= outAluInstructionMux,load= aRegisterLoad,out= aRegisterOut, out[0..14]= addressM); /* 16-bit register, A-register */ 
+
+    //Implementation of the C instruction reqiures implentation of comp, dest, and jump bits within the C instructions
+    Mux16(a= aRegisterOut,b= inM, sel= instruction[12],out= outAMMux); /* Selects between two 16-bit inputs, to use for choosing A or M for ALU */
+    ALU(x= dRegisterOut,y= outAMMux,zx= instruction[11],nx= instruction[10],zy= instruction[9],ny= instruction[8],f= instruction[7],no= instruction[6],out= aluOutput,out = outM, zr= zr,ng= ng); /* Hack ALU */ 
+    
+    And(a= instruction[4],b= instruction[15],out= loadD);/* Only on C instruction*/
+    DRegister(in= aluOutput,load= loadD,out= dRegisterOut); /* 16-bit register, D-register */ 
+    And(a=instruction[15],b=instruction[3],out=writeM); //Had help, only write to memory with C instruction
+    
+    Not16(in= instruction,out= notInstruction,out[5] = notD1,out[4] = notD2,out[3] = notD3, out[2] = notJ1,out[1] = notJ2,out[0] = notJ3); /* 16-bit Not, for use in jump selectors for mux */
+    And(a= notJ1,b= notJ2,out= andNotJ12); /* And gate */
+    And(a= andNotJ12,b= notJ3,out= andNotJ123); /* And gate */
+    Not(in= load,out= notLoad); /* Not gate */
+    Not(in= andNotJ123,out= notAndNotJ123); /* Not gate */
+    And(a= notAndNotJ123,b= notLoad,out= jumpCon); /* And gate */
+    Or(a= jumpCon,b= andNotJ123,out= incInter); /* Or gate */
+    Or(a= incInter,b= notInstructionSign,out= inc); /* Or gate */
+    
+   Not(in= ng,out= notNg); /* Not gate */
+   Not(in= zr,out= notZr); /* Not gate */
+
+    And(a= notNg,b= notZr,out= TwoSel); /* And gate, 2nd sel */
+    Or(a= zr,b= notNg,out= FourSel); /* Or gate, 4th sel */
+    And(a= ng,b= notZr,out= FiveSel); /* And gate, 5th sel */
+    Or(a= zr,b= ng,out= SevenSel); /* Or gate, 7th sel */
+
+    Mux8Way16(a= false,b[0]= TwoSel,c[0]= zr,d[0]= FourSel,e[0]= FiveSel,f[0]= notZr,g[0]= SevenSel,h[0]= true,sel[2]= instruction[2],sel[1]= instruction[1],sel[0]= instruction[0],out[0]= load); /* Selects between eight 16-bit inputs, Selects jump conditon from jump bits */
+    And(a= load,b= instruction[15],out= loadFinal);/* Only load on C instruction*/
+    PC(in= aRegisterOut,load= loadFinal,inc= inc,reset= reset,out[0..14]= pc); /* Program Counter */
+    
+    
+
+
+
+}
