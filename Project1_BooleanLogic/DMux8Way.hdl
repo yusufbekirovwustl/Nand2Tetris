@@ -1,0 +1,31 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/01/DMux8Way.hdl
+
+/**
+ * 8-way demultiplexor:
+ * {a, b, c, d, e, f, g, h} = {in, 0, 0, 0, 0, 0, 0, 0} if sel == 000
+ *                            {0, in, 0, 0, 0, 0, 0, 0} if sel == 001
+ *                            etc.
+ *                            {0, 0, 0, 0, 0, 0, 0, in} if sel == 111
+ */
+
+CHIP DMux8Way {
+    IN in, sel[3];
+    OUT a, b, c, d, e, f, g, h;
+
+    PARTS:
+    // Put your code here:
+    DMux4Way(in= in ,sel= sel[0..1] ,a= firstPart ,b= secondPart ,c= thirdPart ,d= forthPart); /* Channels the input to one out of four outputs */
+    //DMux4Way(in= in ,sel= sel[0..1],a= ePart ,b= fPart ,c= gPart ,d= hPart); /* Channels the input to one out of four outputs */
+    Not(in= sel[2] ,out= selHNot); /* Not gate */
+    And(a= firstPart,b= selHNot ,out= a); /* And gate */
+    And(a= secondPart,b= selHNot ,out= b); /* And gate */
+    And(a= thirdPart,b= selHNot ,out= c); /* And gate */
+    And(a= forthPart,b= selHNot ,out= d); /* And gate */
+    And(a= firstPart,b= sel[2] ,out= e); /* And gate */
+    And(a= secondPart,b= sel[2] ,out= f); /* And gate */
+    And(a= thirdPart,b= sel[2] ,out= g); /* And gate */
+    And(a= forthPart,b= sel[2] ,out= h); /* And gate */
+}
